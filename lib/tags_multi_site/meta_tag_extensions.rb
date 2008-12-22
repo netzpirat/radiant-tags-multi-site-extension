@@ -8,12 +8,11 @@ module TagsMultiSite
         end
 
         # HACK: Remove the existing validates_uniqueness_of block
-        read_inheritable_attribute(:validate).reject! do |proc|
-          if proc.is_a?(Proc)
-            method = eval("caller[0] =~ /`([^']*)'/ and $1", proc.binding).to_sym rescue nil # Returns the name of method the proc was declared in
-            :validates_uniqueness_of == method
-          else
-            false
+        callbacks = MetaTag.instance_variable_get("@validate_callbacks")
+        callbacks.to_a.each do |callback|
+          if callback.method.is_a?(Proc)
+            method = eval("caller[0] =~ /`([^']*)'/ and $1", callback.method.binding).to_sym rescue nil # Returns the name of method the proc was declared in
+            callbacks.delete(callback) if :validates_uniqueness_of == method
           end
         end
 
